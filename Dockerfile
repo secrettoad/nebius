@@ -1,5 +1,5 @@
 # Base image with necessary dependencies
-FROM nvidia/cuda:12.2.2-devel-ubuntu22.04
+FROM nvidia/cuda:12.1.1-devel-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
@@ -20,7 +20,7 @@ RUN git clone https://github.com/ggerganov/llama.cpp.git
 # Build llama.cpp
 WORKDIR /llama.cpp
 RUN cmake -B build -DGGML_CUDA=ON
-RUN cmake --build build --config Release
+RUN cmake --build build --config Release -j$(nproc)
 
 # Copy GGUF model to the container
 COPY ./model.gguf /saved_models/model.gguf
@@ -29,7 +29,7 @@ COPY ./model.gguf /saved_models/model.gguf
 EXPOSE 8080
 
 # Command to run the llama.cpp server
-CMD ["./build/bin/llama-server", "--model", "/saved_models/model.gguf", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["./build/bin/llama-server", "--model", "/saved_models/model.gguf", "--host", "0.0.0.0", "--port", "8080", "--n-gpu-layers", "999"]
 ##todo - next step is get a deployment and service up in nebius
 ##todo - use inference nodegroup - toggle on cuda for llama.cpp
 ##todo - add ingress controller if time (almost certainly not)
